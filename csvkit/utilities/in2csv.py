@@ -18,7 +18,6 @@ from csvkit.convert.geojs import geojson2csv
 
 SUPPORTED_FORMATS = ['csv', 'dbf', 'fixed', 'geojson', 'json', 'ndjson', 'xls', 'xlsx']
 
-
 class In2CSV(CSVKitUtility):
     description = 'Convert common, but less awesome, tabular data formats to CSV.'
     epilog = 'Some command-line flags only pertain to specific input formats.'
@@ -35,6 +34,10 @@ class In2CSV(CSVKitUtility):
         self.argparser.add_argument(
             '-s', '--schema', dest='schema',
             help='Specify a CSV-formatted schema file for converting fixed-width files. See web documentation.')
+        self.argparser.add_argument(
+            '--add-bom', dest='add_bom',action='store_true',default=False,
+            help='Add the byte order mark to the output'
+                 )
         self.argparser.add_argument(
             '-k', '--key', dest='key',
             help='Specify a top-level key to look within for a list of objects to be converted when processing JSON.')
@@ -65,6 +68,7 @@ class In2CSV(CSVKitUtility):
             help='Disable type inference (and --locale, --date-format, --datetime-format, --no-leading-zeroes) '
                  'when parsing CSV input.')
 
+
     # This is called only from open_excel_input_file(), but is a separate method to use caching.
     @functools.lru_cache
     def stdin(self):
@@ -86,6 +90,9 @@ class In2CSV(CSVKitUtility):
 
     def main(self):
         path = self.args.input_path
+
+        if self.args.add_bom:
+            raise NotImplementedError("BOM Was not implemented yet")
 
         # Determine the file type.
         if self.args.filetype:
