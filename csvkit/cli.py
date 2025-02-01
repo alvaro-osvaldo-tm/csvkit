@@ -19,6 +19,8 @@ import agate
 from agate.data_types.base import DEFAULT_NULL_VALUES
 
 from csvkit.exceptions import ColumnIdentifierError, RequiredHeaderError
+from csvkit.factories.OutputStreamFactory import OutputStreamFactory
+from csvkit.model.dataclasses import RequestOutputFile
 
 try:
     import zstandard
@@ -87,10 +89,12 @@ class CSVKitUtility:
         self.args = self.argparser.parse_args(args)
 
         # Output file is only set during testing.
-        if output_file is None:
-            self.output_file = sys.stdout
-        else:
-            self.output_file = output_file
+        self.output_file = OutputStreamFactory.build(
+            request=RequestOutputFile(
+                filename=output_file
+            )
+        )
+
 
         # Error file is only set during testing.
         if error_file is None:
