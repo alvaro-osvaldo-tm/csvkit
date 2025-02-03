@@ -1,15 +1,15 @@
 from argparse import ArgumentParser, Namespace
 from io import TextIOWrapper, BytesIO
-from typing import Any, Union
 
 
 class AddBOM:
 
     @staticmethod
-    def _get_BOM(encoding:str) -> bytes:
+    def _get_BOM(encoding: str) -> bytes:
 
-        if encoding == 'UTF-8' or encoding == 'ANSI':
+        if encoding == "UTF-8" or encoding == "ANSI":
             from codecs import BOM_UTF8
+
             return BOM_UTF8
 
         from codecs import getwriter
@@ -18,7 +18,7 @@ class AddBOM:
         writer = getwriter(encoding)
 
         writer = writer(stream=stream)
-        writer.write('')
+        writer.write("")
 
         stream.seek(0, 0)
         BOM = stream.read1()
@@ -29,14 +29,23 @@ class AddBOM:
     def argument(argparser: ArgumentParser):
 
         argparser.add_argument(
-            '--add-bom', dest='add_bom', action='store_true', default=False,
-            help='Add the byte order mark to the output'
+            "--add-bom",
+            dest="add_bom",
+            action="store_true",
+            default=False,
+            help="Add the byte order mark to the output",
         )
 
     @staticmethod
-    def run(output:TextIOWrapper, encoding: str | None=None, arguments: Namespace | None = None):
+    def run(
+        output: TextIOWrapper,
+        encoding: str | None = None,
+        arguments: Namespace | None = None,
+    ):
 
-        if isinstance(arguments,Namespace) and ( not 'add_bom' in arguments and arguments.add_bom ):
+        if isinstance(arguments, Namespace) and (
+            not "add_bom" in arguments and arguments.add_bom
+        ):
             return
 
         from locale import getencoding
@@ -44,11 +53,3 @@ class AddBOM:
         BOM = AddBOM._get_BOM(encoding or getencoding())
         output.buffer.write(BOM)
         output.buffer.flush()
-
-
-
-
-
-
-
-
