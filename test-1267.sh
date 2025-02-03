@@ -31,6 +31,21 @@ function validate {
 {
   validate "As Parameter" "in2csv --add-bom ./examples/dummy.xls" "bbef"
   validate "As Pipeline" "cat ./examples/dummy.xls | in2csv --add-bom  --format xls -" "bbef"
+
+  # validate "CSVClean" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVCut" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVFormat" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVGrep" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVJoin" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVJson" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVlook" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVPy" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVSort" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVSQL" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  # validate "CSVStack" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+  validate "CSVStat" "in2csv --add-bom ./examples/dummy.xls | csvstat -d , --add-bom -" "bbef"
+  # validate "SQL2csv" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
+
 }
 printf "\n"
 printf "======== Manual validation ======== \n"

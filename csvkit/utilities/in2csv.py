@@ -15,6 +15,7 @@ from csvkit import convert
 from csvkit.cli import CSVKitUtility
 from csvkit.convert.fixed import fixed2csv
 from csvkit.convert.geojs import geojson2csv
+from csvkit.features import AddBOM
 
 SUPPORTED_FORMATS = ['csv', 'dbf', 'fixed', 'geojson', 'json', 'ndjson', 'xls', 'xlsx']
 
@@ -34,10 +35,6 @@ class In2CSV(CSVKitUtility):
         self.argparser.add_argument(
             '-s', '--schema', dest='schema',
             help='Specify a CSV-formatted schema file for converting fixed-width files. See web documentation.')
-        self.argparser.add_argument(
-            '--add-bom', dest='add_bom',action='store_true',default=False,
-            help='Add the byte order mark to the output'
-                 )
         self.argparser.add_argument(
             '-k', '--key', dest='key',
             help='Specify a top-level key to look within for a list of objects to be converted when processing JSON.')

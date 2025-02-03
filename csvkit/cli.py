@@ -89,8 +89,7 @@ class CSVKitUtility:
 
         self.output_file = output_file or sys.stdout
 
-        if ( 'add_bom' in self.args ) and self.args.add_bom:
-            AddBOM.add(output=self.output_file)
+        AddBOM.run(output=self.output_file, arguments=self.args)
 
         # Error file is only set during testing.
         self.error_file = error_file or sys.stderr
@@ -236,6 +235,9 @@ class CSVKitUtility:
                 help='Print detailed tracebacks when errors occur.')
 
         # Output
+
+        AddBOM.argument(self.argparser)
+
         if 'l' not in self.override_flags:
             self.argparser.add_argument(
                 '-l', '--linenumbers', dest='line_numbers', action='store_true',
