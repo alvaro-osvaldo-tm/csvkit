@@ -1,4 +1,4 @@
-from io import TextIOWrapper, BytesIO, IOBase
+from io import TextIOWrapper, BytesIO
 
 
 class AddBOM:

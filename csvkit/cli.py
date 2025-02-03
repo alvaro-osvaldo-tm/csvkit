@@ -18,10 +18,8 @@ from os.path import splitext
 import agate
 from agate.data_types.base import DEFAULT_NULL_VALUES
 
-from csvkit.cases.AddBOM import AddBOM
+from csvkit.cases import AddBOM
 from csvkit.exceptions import ColumnIdentifierError, RequiredHeaderError
-from csvkit.factories.OutputStreamFactory import OutputStreamFactory
-from csvkit.model.dataclasses import RequestOutputFile
 
 try:
     import zstandard
@@ -89,17 +87,13 @@ class CSVKitUtility:
         self.add_arguments()
         self.args = self.argparser.parse_args(args)
 
-        from sys import stdout
-        self.output_file = output_file or stdout
+        self.output_file = output_file or sys.stdout
 
         if ( 'add_bom' in self.args ) and self.args.add_bom:
             AddBOM.add(output=self.output_file)
 
         # Error file is only set during testing.
-        if error_file is None:
-            self.error_file = sys.stderr
-        else:
-            self.error_file = error_file
+        self.error_file = error_file or sys.stderr
 
         self.reader_kwargs = self._extract_csv_reader_kwargs()
         self.writer_kwargs = self._extract_csv_writer_kwargs()
