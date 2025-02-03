@@ -18,7 +18,7 @@ from os.path import splitext
 import agate
 from agate.data_types.base import DEFAULT_NULL_VALUES
 
-from csvkit.cases import AddBOM
+from csvkit.features import AddBOM
 from csvkit.exceptions import ColumnIdentifierError, RequiredHeaderError
 
 try:
