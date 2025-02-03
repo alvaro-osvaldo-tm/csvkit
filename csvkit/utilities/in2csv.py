@@ -91,8 +91,8 @@ class In2CSV(CSVKitUtility):
     def main(self):
         path = self.args.input_path
 
-        if self.args.add_bom:
-            raise NotImplementedError("BOM Was not implemented yet")
+        #if self.args.add_bom:
+            #raise NotImplementedError("BOM Was not implemented yet")
 
         # Determine the file type.
         if self.args.filetype:
