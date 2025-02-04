@@ -10,48 +10,91 @@ function validate {
   COMMAND="$2"
   BOM="$3"
 
+  declare -A CHECKS
+  declare -a ORDER
+
+  CHECKS["UTF8"]="bbef 00"
+  CHECKS["UTF16"]="bbef 00"
+  CHECKS["UTF-16BE"]="bbef 00"
+  CHECKS["UTF-16LE"]="bbef 00"
+  CHECKS["UTF32"]="bbef 00"
+  CHECKS["UTF-32BE"]="bbef 00"
+  CHECKS["UTF-32LE"]="bbef 00"
+  CHECKS["Without"]="2c61 0062"
+
+  ORDER=(
+  "UTF8" "UTF16" "UTF-16BE" "UTF-16LE" "UTF32" "UTF-32BE" "UTF-32LE" "Without"
+  )
+
+
+
   setterm --bold on
-  printf "%-16.16s:" "$TITLE"
+  printf "%-16.16s\n" "$TITLE"
   setterm --default
 
-  content="$(eval "$COMMAND" | od -h -N 3 | head -n 1 | grep -o --perl-regexp '0000000 \K.*')"
-  printf " %-28.28s " "$content"
 
-  if printf "%s\n" "$content" | grep "$BOM" > /dev/null ; then
-    setterm --foreground green
-    printf "PASS"
-    setterm --default
-  else
-    setterm --background red --foreground white --bold on --blink on
-    printf "FAIL"
-    setterm --default
-  fi
+  for check in ${ORDER[*]} ; do
 
-  printf "\n"
+    toExecute="eval "$COMMAND" | od -h -N 3 | head -n 1 | grep -o --perl-regexp '0000000 \K.*'"
+    expectedResult="${CHECKS[$check]}"
+    encoding="$check"
+
+    if [ "$check" == "Without" ]; then
+      toExecute="$(printf "%s" "$toExecute" | sed 's/--add-bom//g')"
+    fi
+
+    if [ "$encoding" == "Without" ]; then
+      encoding=""
+    fi
+
+
+    toExecute="$(printf "%s" "$toExecute" | sed "s/{ENCODING}/$encoding/g")"
+
+    FOUND="$($toExecute)"
+
+
+    if [[  "$FOUND" =~ "$expectedResult" ]]; then valid=1; else valid=0; fi
+
+    printf " · %-12.12s : " "$check"
+
+    printf " %-10.10s " "$FOUND"
+
+    if [[ $valid -eq 1 ]]; then
+        setterm --foreground green
+        printf "PASS";
+    else
+      setterm --background red --foreground white --bold on --blink on
+      printf "FAIL"
+    fi
+
+    setterm --default
+
+    printf "\n"
+  done
+
 
 
 }
+
 {
-  validate "As Parameter" "in2csv --add-bom ./examples/dummy.xls" "bbef"
-  validate "As Pipeline" "cat ./examples/dummy.xls | in2csv --add-bom  --format xls -" "bbef"
+  validate "As Parameter" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls"
+  validate "As Pipeline" "cat ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} in2csv --add-bom  --format xls -"
 
-  validate "CSVClean" "in2csv --add-bom ./examples/dummy.xls | csvclean --add-bom --enable-all-checks -" "bbef"
-  validate "CSVCut" "in2csv --add-bom ./examples/dummy.xls | csvcut --add-bom --columns a" "bbef"
-  validate "CSVFormat" "in2csv --add-bom ./examples/dummy.xls | csvformat --add-bom -D '|' -" "bbef"
-  validate "CSVGrep" "in2csv --add-bom ./examples/dummy.xls | csvgrep --add-bom --column a -m 1.0 -" "bbef"
-  validate "CSVJoin" "in2csv --add-bom ./examples/dummy.xls | csvjoin --add-bom " "bbef"
-  validate "CSVJson" "in2csv --add-bom ./examples/dummy.xls | csvjson --add-bom -" "bbef"
-  validate "CSVlook" "in2csv --add-bom ./examples/dummy.xls | csvlook --add-bom -" "bbef"
+  validate "CSVClean" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvclean --add-bom --enable-all-checks -"
+  validate "CSVCut" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvcut --add-bom --columns a"
+  validate "CSVFormat" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvformat --add-bom -D '|' -"
+  validate "CSVGrep" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvgrep --add-bom --column a -m 1.0 -"
+  validate "CSVJoin" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvjoin --add-bom "
+  validate "CSVJson" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvjson --add-bom -"
+  validate "CSVlook" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvlook --add-bom -"
 
-  validate "CSVSort" "in2csv --add-bom ./examples/dummy.xls | csvsort --add-bom -" "bbef"
-  validate "CSVSQL" "in2csv --add-bom ./examples/dummy.xls | csvsql --add-bom" "bbef"
-  validate "CSVStack" "in2csv --add-bom ./examples/dummy.xls | csvstack --add-bom -n NEWCOL -" "bbef"
-  validate "CSVStat" "in2csv --add-bom ./examples/dummy.xls | csvstat -d , --add-bom -" "bbef"
+  validate "CSVSort" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvsort --add-bom -"
+  validate "CSVSQL" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvsql --add-bom"
+  validate "CSVStack" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvstack --add-bom -n NEWCOL -"
+  validate "CSVStat" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvstat -d , --add-bom -"
 
-  # validate "CSVPy" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
-  # validate "SQL2csv" "in2csv --add-bom ./examples/dummy.xls | csvformat" "bbef"
-
-  validate "Without BOM" "in2csv ./examples/dummy.xls" "2c61 0062"
+  # validate "CSVPy" "in2csv --add-bom ./examples/dummy.xls | csvformat"
+  # validate "SQL2csv" "in2csv --add-bom ./examples/dummy.xls | csvformat"
 
 }
 printf "\n"
@@ -74,3 +117,5 @@ in2csv ./examples/dummy.xls > test.log
 
 
 
+
+}
