@@ -26,6 +26,14 @@ class AddBOM:
         return BOM
 
     @staticmethod
+    def enabled(arguments: Namespace | None = None) -> bool:
+
+        if isinstance(arguments, Namespace):
+            return "add_bom" in arguments and arguments.add_bom
+
+        return True
+
+    @staticmethod
     def argument(argparser: ArgumentParser):
 
         argparser.add_argument(
@@ -43,13 +51,10 @@ class AddBOM:
         arguments: Namespace | None = None,
     ):
 
-        if isinstance(arguments, Namespace) and (
-            not "add_bom" in arguments and arguments.add_bom
-        ):
+        if not AddBOM.enabled(arguments):
             return
 
         from locale import getencoding
 
         BOM = AddBOM._get_BOM(encoding or getencoding())
         output.buffer.write(BOM)
-        output.buffer.flush()
