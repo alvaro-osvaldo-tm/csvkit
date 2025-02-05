@@ -13,7 +13,9 @@ import re
 import sys
 import warnings
 from glob import glob
+from io import TextIOWrapper
 from os.path import splitext
+from typing import Union
 
 import agate
 from agate.data_types.base import DEFAULT_NULL_VALUES
@@ -38,35 +40,38 @@ class LazyFile:
     but it could easily be expanded.
     """
 
-    def __init__(self, inputWrapper, *args, **kwargs):
-        self.inputWrapper = inputWrapper
-        self.f = None
-        self._is_lazy_opened = False
+    def __init__(self, input_wrapper:TextIOWrapper, *args, **kwargs):
+        self.function_wrapper = input_wrapper
+        self.opened_wrapper : Union[TextIOWrapper,None] = None
 
         self._lazy_args = args
         self._lazy_kwargs = kwargs
 
     def __getattr__(self, name):
         self._open()
-        return getattr(self.f, name)
+        return getattr(self.opened_wrapper, name)
 
     def __iter__(self):
         return self
 
     def close(self):
-        if self._is_lazy_opened:
-            self.f.close()
-            self.f = None
-            self._is_lazy_opened = False
+
+        if self.opened_wrapper is None:
+            return
+
+        self.opened_wrapper.close()
+        self.opened_wrapper = None
 
     def __next__(self):
         self._open()
-        return next(self.f).replace('\0', '')
+        return next(self.opened_wrapper)
 
     def _open(self):
-        if not self._is_lazy_opened:
-            self.f = self.inputWrapper(*self._lazy_args, **self._lazy_kwargs)
-            self._is_lazy_opened = True
+        if self.opened_wrapper is not None:
+            return
+
+        self.opened_wrapper = self.function_wrapper(*self._lazy_args, **self._lazy_kwargs)
+
 
 
 class CSVKitUtility:
