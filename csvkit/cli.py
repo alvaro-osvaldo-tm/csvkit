@@ -268,24 +268,24 @@ class CSVKitUtility:
             # "UnsupportedOperation: It is not possible to set the encoding or newline of stream after the first read"
             if not opened:
                 sys.stdin.reconfigure(encoding=self.args.encoding)
-            inputHandler = sys.stdin
+            input_handler = sys.stdin
         else:
             extension = splitext(path)[1]
 
             if extension == '.gz':
-                inputWrapper = gzip.open
+                input_wrapper = gzip.open
             elif extension == '.bz2':
-                inputWrapper = bz2.open
+                input_wrapper = bz2.open
             elif extension == '.xz':
-                inputWrapper = lzma.open
+                input_wrapper = lzma.open
             elif extension == '.zst' and zstandard:
-                inputWrapper = zstandard.open
+                input_wrapper = zstandard.open
             else:
-                inputWrapper = open
+                input_wrapper = open
 
-            inputHandler = LazyFile(inputWrapper, path, mode='rt', encoding=self.args.encoding)
+            input_handler = LazyFile(input_wrapper, path, mode='rt', encoding=self.args.encoding)
 
-        return inputHandler
+        return input_handler
 
     def _extract_csv_reader_kwargs(self):
         """
