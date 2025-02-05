@@ -38,8 +38,8 @@ class LazyFile:
     but it could easily be expanded.
     """
 
-    def __init__(self, init, *args, **kwargs):
-        self.init = init
+    def __init__(self, inputWrapper, *args, **kwargs):
+        self.inputWrapper = inputWrapper
         self.f = None
         self._is_lazy_opened = False
 
@@ -65,7 +65,7 @@ class LazyFile:
 
     def _open(self):
         if not self._is_lazy_opened:
-            self.f = self.init(*self._lazy_args, **self._lazy_kwargs)
+            self.f = self.inputWrapper(*self._lazy_args, **self._lazy_kwargs)
             self._is_lazy_opened = True
 
 
@@ -263,24 +263,24 @@ class CSVKitUtility:
             # "UnsupportedOperation: It is not possible to set the encoding or newline of stream after the first read"
             if not opened:
                 sys.stdin.reconfigure(encoding=self.args.encoding)
-            f = sys.stdin
+            inputHandler = sys.stdin
         else:
             extension = splitext(path)[1]
 
             if extension == '.gz':
-                func = gzip.open
+                inputWrapper = gzip.open
             elif extension == '.bz2':
-                func = bz2.open
+                inputWrapper = bz2.open
             elif extension == '.xz':
-                func = lzma.open
+                inputWrapper = lzma.open
             elif extension == '.zst' and zstandard:
-                func = zstandard.open
+                inputWrapper = zstandard.open
             else:
-                func = open
+                inputWrapper = open
 
-            f = LazyFile(func, path, mode='rt', encoding=self.args.encoding)
+            inputHandler = LazyFile(inputWrapper, path, mode='rt', encoding=self.args.encoding)
 
-        return f
+        return inputHandler
 
     def _extract_csv_reader_kwargs(self):
         """
