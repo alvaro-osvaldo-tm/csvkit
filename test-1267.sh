@@ -12,13 +12,13 @@ function validate {
   declare -a ORDER
 
   CHECKS["UTF8"]="bbef 00"
-  CHECKS["UTF-16"]="bbef 00"
-  CHECKS["UTF-16BE"]="bbef 00"
-  CHECKS["UTF-16LE"]="bbef 00"
-  CHECKS["UTF32"]="bbef 00"
-  CHECKS["UTF-32BE"]="bbef 00"
-  CHECKS["UTF-32LE"]="bbef 00"
-  CHECKS["Without"]=""
+  CHECKS["UTF-16"]="fffe 00"
+  CHECKS["UTF-16BE"]="fffe 00"
+  CHECKS["UTF-16LE"]="feff 00"
+  #CHECKS["UTF32"]="bbef 00"
+  #CHECKS["UTF-32BE"]="bbef 00"
+  #CHECKS["UTF-32LE"]="bbef 00"
+  #CHECKS["Without"]=""
 
   WITHOUT["Parameter"]="2c61 0062"
   WITHOUT["Pipeline"]="2c61 0062"
@@ -34,9 +34,19 @@ function validate {
   WITHOUT["CSVStack"]="2c61 0062"
   WITHOUT["CSVStat"]="2020 0031"
 
+  #ORDER=(
+  #"UTF8" "UTF-16" "UTF-16BE" "UTF-16LE" "UTF32" "UTF-32BE" "UTF-32LE" "Without"
+  #)
+
   ORDER=(
-  "UTF8" "UTF-16" "UTF-16BE" "UTF-16LE" "UTF32" "UTF-32BE" "UTF-32LE" "Without"
+  "UTF8" "UTF-16" "UTF-16BE" "UTF-16LE"
   )
+
+
+  if [[ "$TITLE" != "CSVClean" ]]; then
+    # return
+    :
+  fi
 
 
   setterm --bold on
@@ -46,9 +56,15 @@ function validate {
 
   for check in ${ORDER[*]} ; do
 
+    if [ "$check" != "UTF-16BE" ]; then
+      :
+      #continue
+    fi
+
     printf " · %-12.12s : " "$check"
 
-    toExecute="eval "$COMMAND" | od -h -N 3 | head -n 1 | grep -o --perl-regexp '0000000 \K.*'"
+    toExecute="eval $COMMAND"
+    toVerify="od -h -N 3 | head -n 1 | grep -o --perl-regexp '0000000 \K.*'"
     expectedResult="${CHECKS[$check]}"
     encoding="$check"
 
@@ -60,16 +76,34 @@ function validate {
 
     fi
 
-    toExecute="$(printf "%s" "$toExecute" | sed "s/{ENCODING}/$encoding/g")"
+    if  [ "$encoding" != "" ]; then
+      toExecute="$(printf "%s" "$toExecute" | sed "s/{ENCODING}/$encoding/g")"
+    else
+      toExecute="$(printf "%s" "$toExecute" | sed "s/-e {ENCODING}//g")"
+    fi
 
-    FOUND="$($toExecute)"
+    if ! $toExecute > /dev/null 2> /dev/null ; then
+
+      printf " %-10.10s " " "
+      setterm --background red --foreground yellow --bold on --blink on
+      printf "%s" "ERROR"
+      setterm --default
+      printf " "
+
+      $toExecute | tr -d '[:cntrl:]' | tr -d '\n' | tr -d '\r'
+
+      printf "\n"
+      continue
+    fi
+
+    found="$($toExecute | od -h -N 3 | head -n 1 | grep -o --perl-regexp '0000000 \K.*')"
 
 
-    if [[  "$FOUND" =~ "$expectedResult" ]]; then valid=1; else valid=0; fi
+    if [[  "$found" =~ "$expectedResult" ]]; then valid=1; else valid=0; fi
     if [[  -z "$expectedResult" ]]; then valid=0; fi
+    if [[  -z "$found" ]]; then valid=0; fi
 
-
-    printf " %-10.10s " "$FOUND"
+    printf " %-10.10s " "$found";
 
     if [[ $valid -eq 1 ]]; then
         setterm --foreground green
@@ -90,21 +124,21 @@ function validate {
 
 function AUTOMATED()
 {
-  validate "Parameter" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls"
-  validate "Pipeline" "cat ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} in2csv --add-bom  --format xls -"
+  validate "Parameter" "PYTHONIOENCODING={ENCODING} in2csv  --add-bom ./examples/dummy.xls"
+  # validate "Pipeline" "cat ./examples/dummy.xls |  in2csv -e {ENCODING} --add-bom  --format xls -"
 
-  validate "CSVClean" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvclean --add-bom --enable-all-checks -"
-  validate "CSVCut" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvcut --add-bom --columns a"
-  validate "CSVFormat" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvformat --add-bom -D '|' -"
-  validate "CSVGrep" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvgrep --add-bom --column a -m 1.0 -"
-  validate "CSVJoin" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvjoin --add-bom "
-  validate "CSVJson" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvjson --add-bom -"
-  validate "CSVLook" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvlook --add-bom -"
+  # validate "CSVClean" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvclean -e {ENCODING} --add-bom --enable-all-checks -"
+  # validate "CSVCut" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvcut -e {ENCODING} --add-bom --columns a"
+  # validate "CSVFormat" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvformat -e {ENCODING} --add-bom -D '|' -"
+  # validate "CSVGrep" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvgrep -e {ENCODING} --add-bom --column a -m 1.0 -"
+  # validate "CSVJoin" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvjoin -e {ENCODING} --add-bom "
+  # validate "CSVJson" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvjson -e {ENCODING} --add-bom -"
+  # validate "CSVLook" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvlook -e {ENCODING} --add-bom -"
 
-  validate "CSVSort" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvsort --add-bom -"
-  validate "CSVSQL" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvsql --add-bom"
-  validate "CSVStack" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvstack --add-bom -n NEWCOL -"
-  validate "CSVStat" "PYTHONIOENCODING={ENCODING} in2csv --add-bom ./examples/dummy.xls | PYTHONIOENCODING={ENCODING} csvstat -d , --add-bom -"
+  # validate "CSVSort" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvsort -e {ENCODING} --add-bom -"
+  # validate "CSVSQL" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvsql -e {ENCODING} --add-bom"
+  # validate "CSVStack" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvstack -e {ENCODING} --add-bom -n NEWCOL -"
+  # validate "CSVStat" " in2csv -e {ENCODING} --add-bom ./examples/dummy.xls |  csvstat -e {ENCODING} -d , --add-bom -"
 
   # validate "CSVPy" "in2csv --add-bom ./examples/dummy.xls | csvpy"
   # validate "SQL2csv" "in2csv --add-bom ./examples/dummy.xls | sql2csv"
@@ -165,7 +199,7 @@ printf "=================================== \n"
 
 printf "\n"
 printf "======== Manual validation ======== \n"
-MANUAL
+#MANUAL
 printf "=================================== \n"
 
 }

@@ -1,10 +1,17 @@
 # Implementation
 
-Implemented the feature to optionality add Byte Order Mark (BOM) into output CSV content in all utilities except `csvpy` and `sql2csv`
+Implemented the feature to optionality add UTF-8 Byte Order Mark (BOM) into output CSV content in all utilities,
+except `csvpy` and `sql2csv`
 
 # Solution
 
 - The BOM only will be added if the parameter '--add-bom' is specified, otherwise is ignored.
+- The BOM added will be according to the 'stdout' encoding configuration. 
+  - It makes the implementation sensible to PYTHONIOENCODING environment variable or any Python 'stdout' encoding decision
+- Only UTF-8,  UTF-16 Big Endian and UTF-16 Little Endian is supported
+  - Attempt to add BOM for other encoding raise an exception 
+
+
 - The parameter configuration and execution was implemented in the file `csvkit/features/AddBOM.py` , I used a 'feature' pattern to avoid 'spaghetti code', no problem is the code need to be put into `CSVKitUtility` class. 
   - The advantage of this approach is the code is more clear.
   - The disadvantage of this approach is it require a few more CPU cycles. That can be a problem if the user have a HUGE amount of batch processing files.  
@@ -22,6 +29,14 @@ Implemented the feature to optionality add Byte Order Mark (BOM) into output CSV
 
 
 # Considerations
+
+**Python Encoding**
+
+PYTHONIOENCODING
+
+Failing with:
+- Python 3.8
+
 
 **Python Deprecation**
 
