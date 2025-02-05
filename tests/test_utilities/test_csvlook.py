@@ -73,12 +73,19 @@ class TestCSVLook(CSVKitTestCase, EmptyFileTests):
         ])
 
     def test_unicode_bom(self):
-        self.assertLines(['examples/test_utf8_bom.csv'], [
+        rows = [
             '| foo | bar | baz |',
             '| --- | --- | --- |',
             '|   1 |   2 | 3   |',
             '|   4 |   5 | ʤ   |',
-        ])
+        ]
+
+        self.assertLines(['examples/test_utf8_bom.csv'], rows)
+        self.assertLines(['examples/test_utf-16_bom.csv'], rows)
+        self.assertLines(['examples/test_utf-16le_bom.csv'], rows)
+        self.assertLines(['examples/test_utf-16be_bom.csv'], rows)
+
+
 
     def test_linenumbers(self):
         self.assertLines(['--linenumbers', 'examples/dummy3.csv'], [

@@ -238,8 +238,14 @@ class TestCSVClean(CSVKitTestCase, EmptyFileTests):
         ])
 
     def test_removes_bom(self):
-        self.assertCleaned(['--length-mismatch', 'examples/test_utf8_bom.csv'], [
+
+        rows = [
             ['foo', 'bar', 'baz'],
             ['1', '2', '3'],
             ['4', '5', 'ʤ'],
-        ])
+        ]
+
+        self.assertCleaned(['--length-mismatch', 'examples/test_utf8_bom.csv'], rows )
+        self.assertCleaned(['--length-mismatch', 'examples/test_utf-16_bom.csv'], rows)
+        self.assertCleaned(['--length-mismatch', 'examples/test_utf-16be_bom.csv'], rows)
+        self.assertCleaned(['--length-mismatch', 'examples/test_utf-16le_bom.csv'], rows)
